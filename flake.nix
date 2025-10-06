@@ -23,6 +23,7 @@
           shellHook = ''
             echo "🟢 Next.js dev environment ready!"
             echo "Use 'pnpm install' to install deps, then 'pnpm dev' to start your server."
+            pnpm install
           '';
         };
       });
