@@ -1,5 +1,5 @@
 {
-  description = "Nix flake for running a Next.js app with pnpm";
+  description = "Nix flake for running a Next.js app with pnpm (node-gyp ready)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
@@ -15,14 +15,18 @@
           name = "nextjs-dev";
 
           packages = with pkgs; [
-            nodejs_22     # or nodejs_20 if you prefer LTS
+            nodejs_22
             pnpm
             git
+            python3          # for node-gyp
+            pkg-config       # detect libs
+            libusb1
+            udev
           ];
 
           shellHook = ''
             echo "🟢 Next.js dev environment ready!"
-            echo "Use 'pnpm install' to install deps, then 'pnpm dev' to start your server."
+            echo "Use 'pnpm install' then 'pnpm dev'."
             pnpm install
           '';
         };
