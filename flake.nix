@@ -2,7 +2,7 @@
   description = "Next.js dev shell with full OpenTelemetry & Observability stack (Jaeger + OTEL + Grafana + Prometheus + Loki/Promtail + Dashboards)";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -203,6 +203,7 @@
             pkgs.nodejs_22
             pkgs.pnpm
             pkgs.docker
+            pkgs.xdg-utils  # for xdg-open
             runJaeger
             runOtel
             runGrafana
@@ -212,7 +213,9 @@
           ];
 
           shellHook = ''
-            # All-in-one management functions
+            # ------------------------------
+            # Observability Stack Commands
+            # ------------------------------
             function obs-up() {
               echo "🔧 Starting full observability stack..."
               ${runJaeger}/bin/run-jaeger
@@ -230,21 +233,47 @@
               echo "✅ Observability stack stopped!"
             }
 
+            # ------------------------------
+            # Next.js + Storybook Commands
+            # ------------------------------
+            function app-install() {
+              echo "📦 Installing dependencies with pnpm..."
+              pnpm install
+            }
+
+            function app-dev() {
+              echo "🚀 Starting Next.js dev server..."
+              pnpm run dev
+            }
+
+            function app-storybook() {
+              echo "📘 Starting Storybook on http://localhost:6006 ..."
+              pnpm run storybook &
+              STORYBOOK_PID=$!
+              sleep 5
+              xdg-open http://localhost:6006 >/dev/null 2>&1 || true
+              wait $STORYBOOK_PID
+            }
+
+            # ------------------------------
+            # Startup Info
+            # ------------------------------
             echo "📦 Next.js Dev Environment with Full Observability Stack"
-            echo "👉 Use 'obs-up' to start all observability containers."
-            echo "👉 Use 'obs-down' to stop all observability containers."
+            echo "👉 Use 'obs-up' / 'obs-down' to manage observability stack"
+            echo "👉 Use 'app-install' to install dependencies"
+            echo "👉 Use 'app-dev' to run Next.js"
+            echo "👉 Use 'app-storybook' to run Storybook (auto-opens browser)"
             echo ""
             echo "🌐 Jaeger UI:        http://localhost:16686"
             echo "🌐 Grafana UI:       http://localhost:3001"
             echo "🌐 Prometheus UI:    http://localhost:9090"
-            echo "🌐 OTEL HTTP API:    http://localhost:43180  (host-accessible for SDKs)"
-            echo "🌐 OTEL gRPC:        grpc://localhost:43170  (host-accessible for SDKs)"
-            echo "💡 Inside Docker network, use otel:4317 for container-to-container tracing"
-            echo "🌐 Loki API:         http://localhost:3100  (API only, view logs in Grafana)"
+            echo "🌐 OTEL HTTP API:    http://localhost:43180"
+            echo "🌐 OTEL gRPC:        grpc://localhost:43170"
+            echo "🌐 Loki API:         http://localhost:3100"
             echo ""
             echo "💡 Grafana datasources and dashboards for OTEL, Prometheus, and Loki are auto-loaded."
             echo ""
-            echo "Run your Next.js app with 'pnpm dev'."
+            echo "Run your Next.js app with 'app-dev' after running 'app-install'."
           '';
         };
       });
